@@ -731,9 +731,21 @@ button { font: inherit; }
   font-size: 14px;
   line-height: 1.45;
   letter-spacing: 0.03em;
-  color: rgba(248, 243, 231, 0.82);
+  color: rgba(248, 243, 231, 0.96);
   text-wrap: balance;
-  text-shadow: 0 1px 12px rgba(0, 0, 0, 0.95);
+  text-shadow: 0 0 2px rgba(2, 4, 14, 0.95), 0 1px 4px rgba(2, 4, 14, 0.9), 0 1px 12px rgba(0, 0, 0, 0.95);
+  position: relative;
+  isolation: isolate;
+}
+/* Sombra suave detrás de la instrucción para que se lea sobre las estrellas brillantes (p. ej. el anillo de "revelado"). */
+.momento__indicacion:not(:empty)::before {
+  content: "";
+  position: absolute;
+  inset: -12px -28px;
+  z-index: -1;
+  border-radius: 50%;
+  background: radial-gradient(closest-side, rgba(5, 8, 22, 0.82), rgba(5, 8, 22, 0.55) 60%, rgba(5, 8, 22, 0));
+  pointer-events: none;
 }
 .momento__indicacion.cambio { animation: aparecer-texto 0.9s var(--curva) both; }
 @keyframes aparecer-texto {
