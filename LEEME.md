@@ -6,7 +6,7 @@ Un regalo interactivo en 3D: un universo con una galaxia en espiral que se gira 
 
 Haz doble clic en `index.html`. Funciona sin internet y sin instalar nada: el motor 3D (three.js) y las fuentes van incluidos en la carpeta.
 Para publicarlo, sube la carpeta completa a cualquier hosting estático (Netlify, Vercel, GitHub Pages o tu servidor).
-Está publicado con GitHub Pages en https://rotfflores.github.io/constelaciones/ (repositorio `rotfflores/constelaciones`, rama `main`): cada cambio que se sube a `main` se publica solo en uno o dos minutos. La vista previa al compartir usa `assets/imagen-compartir.jpg` (1200 × 630) y los metadatos Open Graph/Twitter de `index.html`, que ya apuntan a esa URL absoluta. Si lo mueves a otro dominio, cambia `og:url`, `og:image` y `twitter:image`.
+Está publicado con GitHub Pages en https://rotfflores.github.io/constelaciones/ (repositorio `rotfflores/constelaciones`, rama `main`): cada cambio que se sube a `main` se publica solo en uno o dos minutos. La vista previa al compartir usa `assets/imagen-compartir.jpg` (1200 × 630) y los metadatos Open Graph/Twitter de `index.html`, que ya apuntan a esa URL absoluta. Si lo mueves a otro dominio, cambia `og:url`, `og:image` y `twitter:image`. Los archivos CSS y JS se cargan con `?v=20261109` en `index.html`: cuando cambies alguno, cambia ese número en todas las líneas para que los navegadores no mezclen archivos guardados de una versión anterior.
 
 ## El recorrido
 
