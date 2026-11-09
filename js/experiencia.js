@@ -303,22 +303,6 @@
 
   function enExploracion() { return estado.fase === "universo" || estado.fase === "contemplar"; }
 
-  // Mientras la guía está abierta, una constelación por descubrir late para enseñar dónde tocar.
-  var sugerida = -1;
-  function elegirSugerida(ancho, alto) {
-    var ayuda = $("ayuda");
-    if (estado.fase !== "universo" || camara.vuelo || !ayuda.classList.contains("visible")) return -1;
-    var mejor = -1, menor = Infinity;
-    for (var i = 0; i < lista.length; i++) {
-      if (estado.descubiertas[lista[i].id] || !etiquetas[i].classList.contains("visible")) continue;
-      var d = Math.hypot(proy[i].x - ancho / 2, proy[i].y - alto * 0.45);
-      if (d < menor) { menor = d; mejor = i; }
-    }
-    // Se queda en la misma mientras siga a la vista, para que no salte de una a otra al girar.
-    if (sugerida >= 0 && mejor >= 0 && !estado.descubiertas[lista[sugerida].id] && etiquetas[sugerida].classList.contains("visible")) return sugerida;
-    return mejor;
-  }
-
   function actualizarCapas() {
     var ancho = u.ancho, alto = u.alto, explorar = enExploracion() && !camara.vuelo;
     var margen = 24;
@@ -351,15 +335,6 @@
         var k = Math.min(kx, ky);
         ind.style.transform = "translate(" + (ancho / 2 + Math.cos(ang) * k).toFixed(1) + "px," + (alto / 2 + Math.sin(ang) * k).toFixed(1) + "px)";
         ind.style.setProperty("--ang", ang + "rad");
-      }
-    }
-    var nueva = elegirSugerida(ancho, alto);
-    if (nueva !== sugerida) {
-      if (sugerida >= 0) etiquetas[sugerida].classList.remove("sugerida");
-      sugerida = nueva;
-      if (sugerida >= 0) {
-        etiquetas[sugerida].setAttribute("data-sugerencia", (C.esTactil() ? T.sugerencia : (T.sugerenciaRaton || T.sugerencia)) || "");
-        etiquetas[sugerida].classList.add("sugerida");
       }
     }
   }
@@ -431,6 +406,17 @@
 
   /* ---------- Interfaz que usan los momentos ---------- */
 
+  // Demostraciones animadas (solo CSS) del gesto de cada tipo de momento.
+  var DEDO = '<i class="demo__dedo"></i>';
+  var DEMOS_GESTO = {
+    encuentro: '<i class="demo__estrella demo__estrella--a"></i><i class="demo__estrella demo__estrella--b"></i><i class="demo__traza"></i>' + DEDO,
+    revelado: '<svg class="demo__anillo" viewBox="0 0 60 60"><circle cx="30" cy="30" r="22"/><circle class="demo__carga" cx="30" cy="30" r="22"/></svg>' + DEDO,
+    luces: '<i class="demo__luz demo__luz--1"></i><i class="demo__luz demo__luz--2"></i><i class="demo__luz demo__luz--3"></i>' + DEDO,
+    deseos: '<svg class="demo__flecha" viewBox="0 0 60 60"><path d="M30 46V14M21 23l9-9 9 9"/></svg><i class="demo__deseo"></i>' + DEDO,
+    latido: '<svg class="demo__corazon" viewBox="0 0 24 24"><path d="M12 20.5s-7.5-4.6-7.5-10.1A4.3 4.3 0 0 1 12 7.6a4.3 4.3 0 0 1 7.5 2.8c0 5.5-7.5 10.1-7.5 10.1z"/></svg>' + DEDO,
+    tocar: DEDO
+  };
+
   var capa = $("capa-momento");
   var etiquetasMomento = {};
   var botonesMomento = {};
@@ -440,12 +426,27 @@
 
   var ui = {
     indicacion: function (texto) {
-      var el = $("momento-indicacion");
+      var el = $("momento-indicacion"), guia = $("guia-momento");
       if (el.textContent === texto) return;
-      el.classList.remove("cambio");
-      void el.offsetWidth;
       el.textContent = texto;
-      el.classList.add("cambio");
+      if (!texto) { guia.classList.remove("visible"); return; }
+      // Tutorial del momento: tarjeta con una pequeña demostración animada del gesto que pide.
+      var tipo = estado.activa && estado.activa.datos.experiencia ? estado.activa.datos.experiencia.tipo : "";
+      var html = DEMOS_GESTO[tipo] || DEMOS_GESTO.tocar;
+      if (estado.teclado) {
+        var tecla = tipo === "revelado" || tipo === "latido" ? "Espacio" : (tipo === "luces" ? "Tab" : "Enter");
+        tipo = "teclado-" + tecla;
+        html = '<span class="demo__tecla">' + tecla + "</span>";
+      }
+      var demo = $("guia-demo");
+      if (demo.getAttribute("data-tipo") !== tipo) {
+        demo.setAttribute("data-tipo", tipo);
+        demo.innerHTML = html;
+      }
+      $("guia-titulo").textContent = T.tituloGuiaMomento || "";
+      guia.classList.remove("cambio");
+      void guia.offsetWidth;
+      guia.classList.add("visible", "cambio");
     },
     progreso: function (n, tot) {
       var cont = $("momento-puntos");

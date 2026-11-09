@@ -47,7 +47,8 @@ Todo se edita en **`js/configuracion.js`**:
 ### Momentos interactivos
 `experiencia.tipo` puede ser `"encuentro"`, `"revelado"`, `"luces"`, `"deseos"` o `"latido"`, y cualquier tipo sirve en cualquier constelación.
 - `indicacion` es la instrucción que se ve en pantalla; `indicacionTeclado` la que se ve al usar el teclado.
-- La guía de abajo se llama `tituloAyuda` ("Cómo explorar"). Cada parte de `gestosTactil`, `gestosRaton` y `gestosTeclado` separada por " · " se muestra como un paso con su icono. Mientras la guía está abierta, la constelación por descubrir más cercana al centro late con la etiqueta `sugerencia` ("Tócala") o `sugerenciaRaton` ("Haz clic").
+- La guía de abajo se llama `tituloAyuda` ("Cómo explorar"). Cada parte de `gestosTactil`, `gestosRaton` y `gestosTeclado` separada por " · " se muestra como un paso con su icono.
+- Dentro de cada constelación, la `indicacion` de su experiencia aparece en una tarjeta "Cómo descubrirla" (`tituloGuiaMomento`) con una pequeña animación del gesto que pide: arrastrar (encuentro), mantener presionado (revelado y latido), tocar cada luz (luces) o deslizar hacia arriba (deseos). Con teclado muestra la tecla. La tarjeta desaparece al completar el momento.
 - `union` (encuentro) y `cierre` (luces, deseos, latido) son la frase grande que aparece al terminar.
 - En **encuentro**, las estrellas llevan los nombres de `destinatario` y `remitente`.
 - **Luces** y **deseos** toman sus frases de `recuerdo.lista` (luces: hasta 6; deseos: tantos como estrellas tenga la constelación).
