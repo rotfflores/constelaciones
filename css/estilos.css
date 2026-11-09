@@ -2589,6 +2589,48 @@ body.sin-3d-activo { position: static; overflow: auto; touch-action: auto; -webk
 .mapa__vista { flex: none; min-height: 40px; padding: 0 18px 0 15px; font-size: 13.5px; letter-spacing: 0.05em; }
 .mapa__vista svg { width: 19px; height: 19px; }
 .mapa__vista:hover svg { transform: translateY(-2px) scale(1.08); }
+/* Nota "¡Toca aquí!" para que se vea que el botón se puede tocar. */
+.mapa__vista:not(.usado) { animation: vista-llama 2.4s ease-in-out 1.2s infinite; }
+@keyframes vista-llama {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(243, 227, 188, 0); }
+  50% { box-shadow: 0 0 0 5px rgba(243, 227, 188, 0.16), 0 0 22px rgba(243, 227, 188, 0.35); }
+}
+.mapa__vista-nota {
+  position: absolute;
+  right: -12px;
+  top: -15px;
+  padding: 3px 9px 4px;
+  border-radius: 9px;
+  background: var(--oro-claro);
+  color: #141a36;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.03em;
+  white-space: nowrap;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.45);
+  pointer-events: none;
+  transform-origin: 80% 100%;
+  animation: nota-salta 1.8s ease-in-out infinite;
+  transition: opacity 0.4s ease;
+}
+.mapa__vista-nota::after {
+  content: "";
+  position: absolute;
+  left: 18px;
+  bottom: -4px;
+  width: 8px; height: 8px;
+  background: inherit;
+  transform: rotate(45deg);
+  border-radius: 1px;
+}
+@keyframes nota-salta {
+  0%, 100% { transform: translateY(0) rotate(4deg); }
+  50% { transform: translateY(-4px) rotate(4deg); }
+}
+.mapa__vista.usado .mapa__vista-nota { opacity: 0; animation: none; }
+@media (prefers-reduced-motion: reduce) {
+  .mapa__vista:not(.usado), .mapa__vista-nota { animation: none; }
+}
 
 .mapa__texto {
   flex: none;

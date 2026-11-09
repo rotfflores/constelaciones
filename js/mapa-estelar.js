@@ -36,6 +36,8 @@
     titulo: "El cielo de nuestro día",
     destacados: "Lo que brillaba esa noche",
     mirar: "Mirar desde {lugar}",
+    notaMirar: "¡Toca aquí!",
+    notaMirarRaton: "¡Haz clic aquí!",
     verMapa: "Ver el mapa",
     volver: "Seguir explorando",
     reproducir: "Ver pasar la noche",
@@ -1389,6 +1391,11 @@
     this.botonVista.type = "button";
     this.botonVista.appendChild(icono(M.SVG.cupula));
     this.botonVista.appendChild(nodo("span", "", formatear(T.mirar, { lugar: lugarCorto(m) })));
+    // Nota que avisa que el botón se puede tocar; se va después de usarlo la primera vez.
+    var tactil = window.matchMedia && window.matchMedia("(hover: none), (pointer: coarse)").matches;
+    this.notaVista = nodo("span", "mapa__vista-nota", tactil ? T.notaMirar : (T.notaMirarRaton || T.notaMirar));
+    this.notaVista.setAttribute("aria-hidden", "true");
+    this.botonVista.appendChild(this.notaVista);
 
     var texto = nodo("div", "mapa__texto");
     this.fecha = nodo("p", "mapa__fecha", fechaTexto(m, efe));
@@ -2007,7 +2014,10 @@
       if (self.modo === "cupula") self.irA("carta");
       else if (self.op.alCerrar) self.op.alCerrar();
     });
-    this.botonVista.addEventListener("click", function () { self.irA(self.modo === "carta" ? "cupula" : "carta"); });
+    this.botonVista.addEventListener("click", function () {
+      self.botonVista.classList.add("usado");
+      self.irA(self.modo === "carta" ? "cupula" : "carta");
+    });
     this.botonReproducir.addEventListener("click", function () { self.alternarReproduccion(); });
     this.botonHora.addEventListener("click", function () { self.animarMinutos(self.efe.hora); });
     this.barra.addEventListener("input", function () {
