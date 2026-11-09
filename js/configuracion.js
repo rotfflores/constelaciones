@@ -60,6 +60,9 @@ window.CIELO_CONFIG = {
     dedicatoriaBienvenida: "Para", // se muestra como “Para Estefanía”
     botonEntrar: "Descubre nuestro cielo",
     indicacion: "Toca una constelación para descubrir su historia",
+    tituloAyuda: "Cómo explorar",
+    sugerencia: "Tócala",
+    sugerenciaRaton: "Haz clic",
     gestosTactil: "Desliza para girar nuestro universo · pellizca para acercar",
     gestosRaton: "Arrastra para girar nuestro universo · usa la rueda para acercar",
     gestosTeclado: "Tab para elegir una constelación · flechas para girar",

@@ -303,6 +303,22 @@
 
   function enExploracion() { return estado.fase === "universo" || estado.fase === "contemplar"; }
 
+  // Mientras la guía está abierta, una constelación por descubrir late para enseñar dónde tocar.
+  var sugerida = -1;
+  function elegirSugerida(ancho, alto) {
+    var ayuda = $("ayuda");
+    if (estado.fase !== "universo" || camara.vuelo || !ayuda.classList.contains("visible")) return -1;
+    var mejor = -1, menor = Infinity;
+    for (var i = 0; i < lista.length; i++) {
+      if (estado.descubiertas[lista[i].id] || !etiquetas[i].classList.contains("visible")) continue;
+      var d = Math.hypot(proy[i].x - ancho / 2, proy[i].y - alto * 0.45);
+      if (d < menor) { menor = d; mejor = i; }
+    }
+    // Se queda en la misma mientras siga a la vista, para que no salte de una a otra al girar.
+    if (sugerida >= 0 && mejor >= 0 && !estado.descubiertas[lista[sugerida].id] && etiquetas[sugerida].classList.contains("visible")) return sugerida;
+    return mejor;
+  }
+
   function actualizarCapas() {
     var ancho = u.ancho, alto = u.alto, explorar = enExploracion() && !camara.vuelo;
     var margen = 24;
@@ -337,6 +353,15 @@
         ind.style.setProperty("--ang", ang + "rad");
       }
     }
+    var nueva = elegirSugerida(ancho, alto);
+    if (nueva !== sugerida) {
+      if (sugerida >= 0) etiquetas[sugerida].classList.remove("sugerida");
+      sugerida = nueva;
+      if (sugerida >= 0) {
+        etiquetas[sugerida].setAttribute("data-sugerencia", (C.esTactil() ? T.sugerencia : (T.sugerenciaRaton || T.sugerencia)) || "");
+        etiquetas[sugerida].classList.add("sugerida");
+      }
+    }
   }
 
   function constelacionEn(x, y) {
@@ -354,19 +379,54 @@
 
   /* ---------- Ayuda ---------- */
 
-  var temporizadorAyuda = 0;
+  var temporizadorAyuda = 0, temporizadorPlegar = 0, ayudaDesde = 0;
+  // Iconos de cada gesto: girar, acercar (pellizco o rueda) y teclado.
+  var ICONOS_GESTO = {
+    girar: '<svg viewBox="0 0 24 24"><path d="M4.5 12a7.5 7.5 0 0 1 13-5.1"/><path d="M19.5 12a7.5 7.5 0 0 1-13 5.1"/><path d="M17.8 3.6v3.6h-3.6"/><path d="M6.2 20.4v-3.6h3.6"/></svg>',
+    pellizco: '<svg viewBox="0 0 24 24"><path d="M9.5 14.5 4 20"/><path d="M4 15.5V20h4.5"/><path d="M14.5 9.5 20 4"/><path d="M15.5 4H20v4.5"/></svg>',
+    rueda: '<svg viewBox="0 0 24 24"><rect x="6.5" y="3" width="11" height="18" rx="5.5"/><path d="M12 7v3.5"/></svg>',
+    teclado: '<svg viewBox="0 0 24 24"><rect x="3" y="6" width="18" height="12" rx="2.5"/><path d="M7 10h.01M11 10h.01M15 10h.01M8 14h8"/></svg>'
+  };
+  function pintarGestos(texto, modo) {
+    var cont = $("ayuda-secundaria");
+    cont.textContent = "";
+    String(texto || "").split("·").forEach(function (parte, i) {
+      parte = parte.trim();
+      if (!parte) return;
+      var tipo = modo === "teclado" ? "teclado" : (i === 0 ? "girar" : (modo === "tactil" ? "pellizco" : "rueda"));
+      var chip = document.createElement("span");
+      chip.className = "ayuda__paso";
+      chip.innerHTML = '<span class="ayuda__icono" aria-hidden="true">' + ICONOS_GESTO[tipo] + "</span>";
+      chip.appendChild(textoNodo("span", "ayuda__paso-texto", parte.charAt(0).toUpperCase() + parte.slice(1)));
+      cont.appendChild(chip);
+    });
+  }
   function mostrarAyuda(soloPrincipal, duracion) {
     clearTimeout(temporizadorAyuda);
+    clearTimeout(temporizadorPlegar);
+    var modo = estado.teclado ? "teclado" : (C.esTactil() ? "tactil" : "raton");
+    $("ayuda-titulo").textContent = T.tituloAyuda || "";
     $("ayuda-principal").textContent = T.indicacion || "";
-    var gestos = estado.teclado ? T.gestosTeclado : (C.esTactil() ? T.gestosTactil : T.gestosRaton);
-    $("ayuda-secundaria").textContent = gestos || "";
+    pintarGestos(modo === "teclado" ? T.gestosTeclado : (modo === "tactil" ? T.gestosTactil : T.gestosRaton), modo);
     $("ayuda").classList.toggle("arrastrado", !!soloPrincipal);
     $("ayuda").classList.add("visible");
+    ayudaDesde = performance.now();
     if (duracion) temporizadorAyuda = setTimeout(ocultarAyuda, duracion);
   }
   function ocultarAyuda() {
     clearTimeout(temporizadorAyuda);
+    clearTimeout(temporizadorPlegar);
     $("ayuda").classList.remove("visible");
+  }
+  // Al primer gesto la guía se encoge, pero solo después de dejarla leer unos segundos.
+  function plegarAyuda() {
+    var el = $("ayuda");
+    if (el.classList.contains("arrastrado") || temporizadorPlegar) return;
+    var espera = Math.max(0, 9000 - (performance.now() - ayudaDesde));
+    temporizadorPlegar = setTimeout(function () {
+      temporizadorPlegar = 0;
+      if (estado.fase === "universo") el.classList.add("arrastrado");
+    }, espera);
   }
 
   /* ---------- Interfaz que usan los momentos ---------- */
@@ -1333,7 +1393,7 @@
         cuerpo.classList.remove("con-teclado");
         if (estado.ritual && estado.ritual.reindicar) estado.ritual.reindicar();
       }
-      if (estado.fase === "universo") $("ayuda").classList.add("arrastrado");
+      if (estado.fase === "universo") plegarAyuda();
     }
   });
 
