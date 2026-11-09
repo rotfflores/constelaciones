@@ -30,6 +30,23 @@
     return el;
   }
 
+  // Una galería (recuerdo.fotos) deja su primera foto como recuerdo.foto:
+  // es la que forma el polvo de estrellas en el momento “revelado”.
+  (cfg.constelaciones || []).forEach(function (d) {
+    var r = d.recuerdo;
+    if (!r || !r.fotos) return;
+    r.fotos = (r.fotos || []).map(function (f) { return typeof f === "string" ? { foto: f } : f; })
+      .filter(function (f) { return f && f.foto; });
+    if (!r.fotos.length) { r.fotos = null; return; }
+    if (!r.foto) {
+      r.foto = r.fotos[0].foto;
+      if (!r.textoAlternativo) r.textoAlternativo = r.fotos[0].textoAlternativo || "";
+    }
+  });
+
+  // Chispas y brillo en todos los botones.
+  C.Botones.activar({ sonido: function () { return musica; } });
+
   function mostrarSin3D() {
     cuerpo.className = "sin-3d-activo";
     ["bienvenida", "ayuda", "controles-zoom"].forEach(function (id) { var el = $(id); if (el) el.hidden = true; });
@@ -41,8 +58,19 @@
     var cont = $("sin-3d-recuerdos");
     (cfg.constelaciones || []).forEach(function (d) {
       var r = d.recuerdo || {};
+      if (d.mapaEstelar && C.MapaEstelar && C.MapaEstelar.disponible()) {
+        cont.appendChild(C.MapaEstelar.plano(d.mapaEstelar, {
+          textos: T, destinatario: cfg.destinatario, remitente: cfg.remitente, mensaje: r.mensaje, color: d.color
+        }));
+        return;
+      }
       var art = textoNodo("article", "recuerdo recuerdo--plano");
-      if (r.foto) {
+      art.style.setProperty("--acento", d.color || "#f3dca8");
+      if (r.fotos && r.fotos.length) {
+        var gal = C.Galeria.crear(r.fotos, { textos: T, titulo: r.titulo || d.nombre });
+        art.appendChild(gal.elemento);
+        gal.mostrar(500);
+      } else if (r.foto) {
         var fig = textoNodo("figure", "recuerdo__foto");
         var img = document.createElement("img");
         img.src = r.foto;
@@ -59,6 +87,9 @@
         r.lista.forEach(function (item) { ul.appendChild(textoNodo("li", "", item)); });
         tx.appendChild(ul);
       }
+      var sorpresa = r.sorpresa ? C.Sorpresas.crear(r.sorpresa, { textos: T }) : null;
+      if (sorpresa) tx.appendChild(sorpresa.elemento);
+      if (sorpresa && sorpresa.sonarDesdeElInicio && r.sorpresa.desdeElInicio && !C.Cancion.actual) sorpresa.sonarDesdeElInicio();
       art.appendChild(tx);
       cont.appendChild(art);
     });
@@ -203,8 +234,15 @@
     actualizarMusica();
   }
 
+  // Si la canción suena desde el inicio o ya se desbloqueó, el botón de música la pausa o la reanuda.
+  function cancionLista() {
+    var c = C.Cancion && C.Cancion.actual;
+    return c && c.cargada() ? c : null;
+  }
+
   function actualizarMusica() {
-    var m = cfg.musica || {}, sonando = musica.estaSonando();
+    var m = cfg.musica || {}, cancion = cancionLista();
+    var sonando = musica.estaSonando() || !!(cancion && cancion.sonando());
     $("boton-musica").classList.toggle("sonando", sonando);
     $("boton-musica").setAttribute("aria-pressed", sonando ? "true" : "false");
     $("etiqueta-musica").textContent = sonando ? (m.etiquetaPausar || "Pausar música") : (m.etiquetaActivar || "Activar música");
@@ -551,14 +589,21 @@
     camara.vaivenObjetivo = reducido ? 0 : 1;
     camara.volarA(vistaDetalle(c), { duracion: reducido ? 1 : 1800, arco: 0.04 }).then(function (ok) {
       if (!ok || estado.activa !== c || estado.fase !== "momento") return;
-      if (descubierta) abrirRecuerdo(c);
+      if (descubierta) abrirDestino(c);
       else iniciarMomento(c);
     });
   }
 
   var TIPO_POR_DEFECTO = ["encuentro", "revelado", "luces", "deseos", "latido"];
 
+  // Durante cada momento la canción baja un poco, para que se oigan sus sonidos.
+  function atenuarCancion(si) {
+    var cancion = cancionLista();
+    if (cancion && cancion.atenuar) cancion.atenuar(si);
+  }
+
   function iniciarMomento(c) {
+    atenuarCancion(true);
     var tipo = (c.datos.experiencia || {}).tipo || TIPO_POR_DEFECTO[c.indice % TIPO_POR_DEFECTO.length];
     cuerpo.setAttribute("data-momento", tipo);
     estado.ritual = C.Rituales.crear(tipo, {
@@ -570,6 +615,7 @@
   }
 
   function terminarRitual() {
+    atenuarCancion(false);
     if (estado.ritual) {
       estado.ritual.destruir();
       estado.ritual = null;
@@ -583,7 +629,7 @@
     estado.descubiertas[c.id] = true;
     c.completar();
     actualizarProgreso();
-    abrirRecuerdo(c);
+    abrirDestino(c);
   }
 
   function ocultarMomento() {
@@ -761,22 +807,188 @@
     lamina.classList.add("con-retrato");
   }
 
-  function abrirRecuerdo(c) {
+  // Galería y sorpresa de cada recuerdo: se crean una vez y conservan su estado
+  // (la cita sigue abierta y la canción sigue sonando al volver a abrir la tarjeta).
+  var componentes = {};
+
+  function componentesDe(c) {
+    if (componentes[c.id]) return componentes[c.id];
     var r = c.datos.recuerdo || {};
-    var tarjeta = $("recuerdo").querySelector(".recuerdo");
-    var conLamina = !r.foto;
+    var comp = componentes[c.id] = {};
+    if (r.fotos && r.fotos.length) {
+      comp.galeria = C.Galeria.crear(r.fotos, { textos: T, sonido: musica, titulo: r.titulo || c.datos.nombre });
+    }
+    if (r.sorpresa) {
+      comp.sorpresa = C.Sorpresas.crear(r.sorpresa, {
+        textos: T,
+        sonido: musica,
+        alAbrir: llevarALaVista,
+        antesDeSonar: function () { if (musica.estaSonando()) musica.alternar(); },
+        alCambiar: actualizarMusica,
+        alLinea: letraViva
+      });
+    }
+    return comp;
+  }
+
+  function llevarALaVista(el) {
+    var caja = $("recuerdo-desplazable");
+    if (!caja || !caja.contains(el)) return;
+    var rc = caja.getBoundingClientRect(), re = el.getBoundingClientRect();
+    var destino = caja.scrollTop + (re.top - rc.top) - Math.max(16, (rc.height - re.height) / 2);
+    try { caja.scrollTo({ top: Math.max(0, destino), behavior: reducido ? "auto" : "smooth" }); }
+    catch (e) { caja.scrollTop = Math.max(0, destino); }
+  }
+
+  // El mensaje aparece palabra por palabra.
+  function ponerPalabras(el, texto) {
+    el.textContent = "";
+    String(texto || "").split(/\s+/).filter(Boolean).forEach(function (p, i, todas) {
+      var s = textoNodo("span", "pm", p);
+      s.style.setProperty("--i", i);
+      el.appendChild(s);
+      if (i < todas.length - 1) el.appendChild(document.createTextNode(" "));
+    });
+  }
+
+  // La constelación en el reverso de la tarjeta.
+  function dibujarDorso(c) {
+    var d = c.datos, svg = $("recuerdo-dorso-figura");
+    var estrellas = d.estrellas || [];
+    svg.textContent = "";
+    if (!estrellas.length) return;
+    var minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
+    estrellas.forEach(function (e) {
+      minX = Math.min(minX, e[0]); maxX = Math.max(maxX, e[0]);
+      minY = Math.min(minY, e[1]); maxY = Math.max(maxY, e[1]);
+    });
+    var lado = Math.max(maxX - minX, maxY - minY) + 12;
+    var cx = (minX + maxX) / 2, cy = (minY + maxY) / 2;
+    svg.setAttribute("viewBox", [cx - lado / 2, cy - lado / 2, lado, lado].map(function (v) { return v.toFixed(1); }).join(" "));
+    (d.trazos || []).forEach(function (t) {
+      var a = estrellas[t[0]], b = estrellas[t[1]];
+      if (a && b) svg.appendChild(nodoSvg("line", { x1: a[0], y1: a[1], x2: b[0], y2: b[1] }));
+    });
+    estrellas.forEach(function (e) {
+      svg.appendChild(nodoSvg("circle", { cx: e[0], cy: e[1], r: (1 + (e[2] == null ? 0.7 : e[2]) * 1.6).toFixed(2) }));
+    });
+  }
+
+  // Aviso flotante si la sorpresa quedó más abajo y todavía no se ve.
+  var observadorSorpresa = null, temporizadorAviso = 0;
+  function prepararAviso(sorpresa) {
+    var chip = $("recuerdo-aviso"), caja = $("recuerdo-desplazable");
+    clearTimeout(temporizadorAviso);
+    if (observadorSorpresa) { observadorSorpresa.disconnect(); observadorSorpresa = null; }
+    chip.classList.remove("visible");
+    chip.hidden = true;
+    if (!sorpresa || !window.IntersectionObserver) return;
+    var el = sorpresa.elemento, vista = false;
+    observadorSorpresa = new IntersectionObserver(function (entradas) {
+      if (!entradas[0].isIntersecting) return;
+      vista = true;
+      chip.classList.remove("visible");
+      setTimeout(function () { if (!chip.classList.contains("visible")) chip.hidden = true; }, 500);
+    }, { root: caja, threshold: 0.2 });
+    observadorSorpresa.observe(el);
+    temporizadorAviso = setTimeout(function () {
+      if (estado.fase !== "recuerdo" || vista) return;
+      $("recuerdo-aviso-texto").textContent = T.haySorpresa || "Hay una sorpresa más abajo";
+      chip.hidden = false;
+      requestAnimationFrame(function () { chip.classList.add("visible"); });
+    }, reducido ? 400 : 2600);
+  }
+  $("recuerdo-aviso").addEventListener("click", function () {
+    var s = $("recuerdo-sorpresa");
+    llevarALaVista(s.firstElementChild || s);
+  });
+
+  // La tarjeta se inclina hacia el cursor y su brillo lo sigue; con el dedo, solo el brillo.
+  var inclinable = !reducido && !!(window.matchMedia && window.matchMedia("(hover: hover) and (pointer: fine)").matches);
+  var inclinacionLista = false, temporizadorBrillo = 0;
+  function tarjetaRecuerdo() { return $("recuerdo").querySelector(".recuerdo"); }
+  function enderezar() {
+    var t = tarjetaRecuerdo();
+    t.style.setProperty("--rx", "0deg");
+    t.style.setProperty("--ry", "0deg");
+    t.classList.remove("con-brillo");
+  }
+  $("recuerdo").addEventListener("pointermove", function (e) {
+    if (estado.fase !== "recuerdo") return;
+    var t = tarjetaRecuerdo(), r = t.getBoundingClientRect();
+    var px = (e.clientX - r.left) / r.width, py = (e.clientY - r.top) / r.height;
+    var dentro = px >= 0 && px <= 1 && py >= 0 && py <= 1;
+    t.style.setProperty("--gx", (px * 100).toFixed(1) + "%");
+    t.style.setProperty("--gy", (py * 100).toFixed(1) + "%");
+    if (e.pointerType !== "mouse") return;
+    t.classList.toggle("con-brillo", dentro);
+    if (!inclinable || !inclinacionLista) return;
+    t.classList.add("inclinando");
+    t.style.setProperty("--rx", dentro ? ((0.5 - py) * 5).toFixed(2) + "deg" : "0deg");
+    t.style.setProperty("--ry", dentro ? ((px - 0.5) * 6).toFixed(2) + "deg" : "0deg");
+  });
+  $("recuerdo").addEventListener("pointerleave", function () { if (inclinable) enderezar(); });
+  $("recuerdo").addEventListener("pointerdown", function (e) {
+    if (e.pointerType === "mouse" || estado.fase !== "recuerdo") return;
+    var t = tarjetaRecuerdo(), r = t.getBoundingClientRect();
+    t.style.setProperty("--gx", ((e.clientX - r.left) / r.width * 100).toFixed(1) + "%");
+    t.style.setProperty("--gy", ((e.clientY - r.top) / r.height * 100).toFixed(1) + "%");
+    t.classList.add("con-brillo");
+    clearTimeout(temporizadorBrillo);
+    temporizadorBrillo = setTimeout(function () { t.classList.remove("con-brillo"); }, 900);
+  });
+
+  // La línea que suena de la canción, mientras se explora el cielo.
+  function letraViva(texto) {
+    var el = $("letra-viva");
+    var actual = $("letra-viva-texto").textContent;
+    if (texto === actual && el.classList.contains("con-texto") === !!texto) return;
+    el.classList.remove("cambio");
+    void el.offsetWidth;
+    $("letra-viva-texto").textContent = texto || "";
+    el.classList.toggle("con-texto", !!texto);
+    if (texto) el.classList.add("cambio");
+  }
+
+  function abrirRecuerdo(c) {
+    atenuarCancion(false);
+    var r = c.datos.recuerdo || {};
+    var tarjeta = tarjetaRecuerdo();
+    var comp = componentesDe(c);
+    var conGaleria = !!comp.galeria;
+    var conFoto = !conGaleria && !!r.foto;
+    var conLamina = !conGaleria && !conFoto;
+    tarjeta.classList.toggle("recuerdo--galeria", conGaleria);
+    tarjeta.classList.toggle("recuerdo--foto", conFoto);
     tarjeta.classList.toggle("recuerdo--lamina", conLamina);
     tarjeta.classList.toggle("recuerdo--con-lista", !!(r.lista && r.lista.length));
+    tarjeta.classList.toggle("recuerdo--con-sorpresa", !!comp.sorpresa);
+    tarjeta.classList.remove("inclinando", "con-brillo");
     tarjeta.style.setProperty("--acento", c.datos.color || "#f3dca8");
+    tarjeta.style.setProperty("--rx", "0deg");
+    tarjeta.style.setProperty("--ry", "0deg");
+    inclinacionLista = false;
+
+    var numeral = ROMANOS[c.indice] || String(c.indice + 1);
+    $("recuerdo-sello").textContent = numeral;
+    $("recuerdo-marca-agua").textContent = numeral;
+    $("recuerdo-dorso-numero").textContent = "Constelación " + numeral;
+    $("recuerdo-dorso-forma").textContent = c.datos.forma || "";
+    dibujarDorso(c);
+
+    var cajaGaleria = $("recuerdo-galeria");
+    cajaGaleria.textContent = "";
+    if (conGaleria) cajaGaleria.appendChild(comp.galeria.elemento);
+    cajaGaleria.hidden = !conGaleria;
     $("recuerdo-lamina").hidden = !conLamina;
     if (conLamina) dibujarLamina(c);
-    var fecha = conLamina ? (r.fecha || "") : (r.fecha || c.datos.forma || "");
+    var fecha = r.fecha || (conFoto ? c.datos.forma || "" : "");
     $("recuerdo-fecha").textContent = fecha;
     $("recuerdo-fecha").hidden = !fecha;
     $("recuerdo-titulo").textContent = r.titulo || c.datos.nombre || "";
-    $("recuerdo-mensaje").textContent = r.mensaje || "";
+    ponerPalabras($("recuerdo-mensaje"), r.mensaje || "");
     var fig = $("recuerdo-figura"), img = $("recuerdo-imagen");
-    if (r.foto) {
+    if (conFoto) {
       img.src = r.foto;
       img.alt = r.textoAlternativo || "";
       fig.hidden = false;
@@ -796,17 +1008,35 @@
     } else {
       ul.hidden = true;
     }
+    var cajaSorpresa = $("recuerdo-sorpresa");
+    cajaSorpresa.textContent = "";
+    if (comp.sorpresa) cajaSorpresa.appendChild(comp.sorpresa.elemento);
+    cajaSorpresa.hidden = !comp.sorpresa;
+
     ui.indicacion("");
     estado.fase = "recuerdo";
     cuerpo.classList.add("en-recuerdo");
     var velo = $("recuerdo");
     velo.hidden = false;
-    tarjeta.scrollTop = 0;
+    $("recuerdo-desplazable").scrollTop = 0;
     if (conLamina) ponerRetrato(c);
     requestAnimationFrame(function () {
       velo.classList.add("visible");
       tarjeta.focus({ preventScroll: true });
     });
+    if (comp.galeria) comp.galeria.mostrar(reducido ? 100 : 1350);
+    if (comp.sorpresa && comp.sorpresa.alMostrar) comp.sorpresa.alMostrar();
+    prepararAviso(comp.sorpresa);
+    // Al voltearse, la tarjeta suelta un destello de estrellas.
+    if (!reducido) {
+      setTimeout(function () {
+        if (estado.fase !== "recuerdo") return;
+        var rc = tarjeta.getBoundingClientRect();
+        C.chispas(rc.left + rc.width / 2, rc.top + Math.min(rc.height / 2, 230), { cantidad: 20, alcance: Math.min(170, rc.width * 0.42), color: c.datos.color, onda: Math.min(380, rc.width * 0.9) });
+        musica.campanilla(5);
+      }, 600);
+    }
+    setTimeout(function () { if (estado.fase === "recuerdo") inclinacionLista = true; }, reducido ? 0 : 1400);
     // Con la tarjeta abierta, el cielo deja de dibujarse para ahorrar batería.
     clearTimeout(temporizadorPausa);
     temporizadorPausa = setTimeout(function () { if (estado.fase === "recuerdo") estado.pausado = true; }, 1100);
@@ -816,16 +1046,72 @@
     if (estado.fase !== "recuerdo") return;
     quitarVitrina();
     clearTimeout(temporizadorPausa);
+    clearTimeout(temporizadorAviso);
+    if (observadorSorpresa) { observadorSorpresa.disconnect(); observadorSorpresa = null; }
     estado.pausado = false;
     var c = estado.activa;
+    var comp = c ? componentes[c.id] : null;
+    if (comp && comp.galeria) comp.galeria.ocultar();
+    inclinacionLista = false;
+    enderezar();
     var velo = $("recuerdo");
     velo.classList.remove("visible");
+    $("recuerdo-aviso").classList.remove("visible");
     cuerpo.classList.remove("en-recuerdo");
     setTimeout(function () { if (!velo.classList.contains("visible")) velo.hidden = true; }, 700);
     terminarRitual();
     ocultarMomento();
     estado.fase = "momento";
     regresarAlCielo(c);
+  }
+
+  /* ---------- Mapa estelar ---------- */
+
+  // Una constelación con "mapaEstelar" abre el cielo real de esa noche en lugar de la tarjeta.
+  var mapa = null;
+  function mapaDe(c) {
+    return c && c.datos.mapaEstelar && C.MapaEstelar && C.MapaEstelar.disponible() ? c.datos.mapaEstelar : null;
+  }
+  function abrirDestino(c) {
+    if (mapaDe(c)) abrirMapa(c);
+    else abrirRecuerdo(c);
+  }
+  function abrirMapa(c) {
+    if (!mapa) {
+      try {
+        mapa = C.MapaEstelar.crear({
+          raiz: $("mapa"), config: c.datos.mapaEstelar, textos: T, movil: movil, reducido: reducido, sonido: musica,
+          color: c.datos.color, destinatario: cfg.destinatario, remitente: cfg.remitente,
+          mensaje: (c.datos.recuerdo || {}).mensaje, alCerrar: cerrarMapa
+        });
+      } catch (err) {
+        if (window.console) console.error(err);
+        mapa = null;
+        abrirRecuerdo(c);
+        return;
+      }
+      window.__cielo.mapa = mapa;
+    }
+    atenuarCancion(false);
+    ui.indicacion("");
+    estado.fase = "mapa";
+    cuerpo.classList.add("en-mapa");
+    mapa.abrir();
+    musica.campanilla(5);
+    // Con el mapa abierto, el universo deja de dibujarse; el mapa tiene su propio lienzo.
+    clearTimeout(temporizadorPausa);
+    temporizadorPausa = setTimeout(function () { if (estado.fase === "mapa") estado.pausado = true; }, 1000);
+  }
+  function cerrarMapa() {
+    if (estado.fase !== "mapa") return;
+    clearTimeout(temporizadorPausa);
+    estado.pausado = false;
+    mapa.cerrar();
+    cuerpo.classList.remove("en-mapa");
+    terminarRitual();
+    ocultarMomento();
+    estado.fase = "momento";
+    regresarAlCielo(estado.activa);
   }
 
   /* ---------- Final ---------- */
@@ -1056,8 +1342,8 @@
   var TECLAS_NAVEGACION = { Tab: 1, ArrowLeft: 1, ArrowRight: 1, ArrowUp: 1, ArrowDown: 1, Enter: 1, " ": 1 };
 
   function atraparFoco(e, contenedor) {
-    var focos = Array.prototype.filter.call(contenedor.querySelectorAll("button, [href], [tabindex]:not([tabindex='-1'])"), function (el) {
-      return !el.hidden && el.offsetParent !== null;
+    var focos = Array.prototype.filter.call(contenedor.querySelectorAll("button, [href], input, [tabindex]:not([tabindex='-1'])"), function (el) {
+      return !el.hidden && el.offsetParent !== null && !el.closest("[inert]") && getComputedStyle(el).visibility !== "hidden";
     });
     if (!focos.length) return;
     var primero = focos[0], ultimo = focos[focos.length - 1];
@@ -1080,13 +1366,15 @@
       return;
     }
     if (e.key === "Escape") {
-      if (f === "recuerdo") cerrarRecuerdo();
+      if (f === "mapa") { if (!mapa || !mapa.atras()) cerrarMapa(); }
+      else if (f === "recuerdo") cerrarRecuerdo();
       else if (f === "carta") contemplar();
       else if (f === "momento") volverDesdeMomento();
       return;
     }
     if (e.key === "Tab") {
       if (f === "recuerdo") atraparFoco(e, $("recuerdo"));
+      else if (f === "mapa") atraparFoco(e, $("mapa"));
       else if (f === "carta") atraparFoco(e, $("carta"));
       return;
     }
@@ -1111,6 +1399,8 @@
 
   $("boton-entrar").addEventListener("click", entrar);
   $("boton-musica").addEventListener("click", function () {
+    var cancion = cancionLista();
+    if (cancion) { cancion.alternar(); return; }
     musica.alternar().then(actualizarMusica);
     actualizarMusica();
   });
@@ -1136,6 +1426,7 @@
     u.dimensionar(w, h, dpr);
     anchosEtiquetas = [];
     if (vitrinaActiva) dimensionarVitrina();
+    if (mapa && mapa.estaActivo()) mapa.dimensionar();
     if (estado.fase === "bienvenida") camara.fijar(vistaBienvenida());
     else if (estado.fase === "universo" && !camara.vuelo) camara.volarA(vistaUniverso(camara.az), { duracion: reducido ? 1 : 700 });
     else if (estado.fase === "contemplar" && !camara.vuelo) camara.volarA(vistaFinal(true), { duracion: reducido ? 1 : 700 });
@@ -1170,8 +1461,20 @@
     }
   }
 
+  // Si la página se oculta, la música se pausa; al volver, sigue donde se quedó.
+  var sonabaAlOcultar = { musica: false, cancion: false };
   document.addEventListener("visibilitychange", function () {
-    if (document.hidden && musica.estaSonando()) { musica.alternar(); actualizarMusica(); }
+    var cancion = cancionLista();
+    if (document.hidden) {
+      sonabaAlOcultar.musica = musica.estaSonando();
+      sonabaAlOcultar.cancion = !!(cancion && cancion.sonando());
+      if (sonabaAlOcultar.musica) { musica.alternar(); actualizarMusica(); }
+      if (sonabaAlOcultar.cancion) cancion.pausar();
+      return;
+    }
+    if (sonabaAlOcultar.cancion && cancion && !cancion.sonando()) cancion.alternar();
+    if (sonabaAlOcultar.musica && !musica.estaSonando()) musica.alternar().then(actualizarMusica);
+    sonabaAlOcultar.musica = sonabaAlOcultar.cancion = false;
   });
 
   var ultimo = performance.now(), reloj = 0, proximoMeteoro = 4;
@@ -1182,10 +1485,12 @@
     ultimo = ahora;
     // La constelación de la tarjeta sigue viva aunque el universo esté en pausa.
     if (vitrina && (vitrinaActiva || estado.fase === "recuerdo") && !document.hidden) vitrina.cuadro(Math.min(0.05, Math.max(0, dtMs / 1000)));
+    // El mapa estelar también sigue vivo con el universo en pausa.
+    if (mapa && mapa.estaActivo() && !document.hidden) mapa.cuadro(Math.min(0.05, Math.max(0, dtMs / 1000)));
     if (estado.pausado || document.hidden) return;
     var dt = Math.min(0.05, Math.max(0, dtMs / 1000));
     reloj += dt;
-    if (estado.fase !== "carta" && estado.fase !== "recuerdo") medir(dtMs);
+    if (estado.fase !== "carta" && estado.fase !== "recuerdo" && estado.fase !== "mapa") medir(dtMs);
 
     // Giro automático suave cuando nadie toca el cielo.
     if (!reducido) {
@@ -1210,6 +1515,13 @@
   prepararTextos();
   actualizarProgreso();
   dimensionar();
+  // La canción que suena desde el inicio: empieza con el primer toque de la persona.
+  lista.forEach(function (c) {
+    var s = (c.datos.recuerdo || {}).sorpresa;
+    if (C.Cancion.actual || !s || s.tipo !== "cancion" || !s.archivo || !s.desdeElInicio) return;
+    var comp = componentesDe(c);
+    if (comp.sorpresa && comp.sorpresa.sonarDesdeElInicio) comp.sorpresa.sonarDesdeElInicio({ excepto: "#boton-musica" });
+  });
   camara.fijar(vistaBienvenida());
   camara.vaivenObjetivo = reducido ? 0 : 1;
   if (document.fonts && document.fonts.load) {

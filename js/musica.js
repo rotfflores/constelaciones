@@ -224,6 +224,22 @@
       soplo: function () {
         if (!puedeSonar()) return;
         soplido(1.1, 400, 2400, 0.22);
+      },
+      // Botones: un tintineo muy suave al tocarlos.
+      toque: function () {
+        if (!puedeSonar() || !conCampanillas) return;
+        nota(ESCALA[5 + Math.floor(Math.random() * 4)], 0.022, 1.4);
+      },
+      // El candado: la llave gira y el arco se abre.
+      clic: function (fuerte) {
+        if (!puedeSonar()) return;
+        soplido(0.05, 4200, 2600, fuerte ? 0.3 : 0.2, "highpass");
+        golpe(fuerte ? 180 : 240, 0.09, fuerte ? 0.22 : 0.14, 0.01);
+      },
+      // Una foto que se desliza sobre las demás.
+      deslizar: function () {
+        if (!puedeSonar()) return;
+        soplido(0.32, 700, 2600, 0.07);
       }
     };
   }
