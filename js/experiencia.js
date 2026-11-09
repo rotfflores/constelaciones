@@ -354,68 +354,22 @@
 
   /* ---------- Ayuda ---------- */
 
-  var temporizadorAyuda = 0, temporizadorPlegar = 0, ayudaDesde = 0;
-  // Iconos de cada gesto: girar, acercar (pellizco o rueda) y teclado.
-  var ICONOS_GESTO = {
-    girar: '<svg viewBox="0 0 24 24"><path d="M4.5 12a7.5 7.5 0 0 1 13-5.1"/><path d="M19.5 12a7.5 7.5 0 0 1-13 5.1"/><path d="M17.8 3.6v3.6h-3.6"/><path d="M6.2 20.4v-3.6h3.6"/></svg>',
-    pellizco: '<svg viewBox="0 0 24 24"><path d="M9.5 14.5 4 20"/><path d="M4 15.5V20h4.5"/><path d="M14.5 9.5 20 4"/><path d="M15.5 4H20v4.5"/></svg>',
-    rueda: '<svg viewBox="0 0 24 24"><rect x="6.5" y="3" width="11" height="18" rx="5.5"/><path d="M12 7v3.5"/></svg>',
-    teclado: '<svg viewBox="0 0 24 24"><rect x="3" y="6" width="18" height="12" rx="2.5"/><path d="M7 10h.01M11 10h.01M15 10h.01M8 14h8"/></svg>'
-  };
-  function pintarGestos(texto, modo) {
-    var cont = $("ayuda-secundaria");
-    cont.textContent = "";
-    String(texto || "").split("·").forEach(function (parte, i) {
-      parte = parte.trim();
-      if (!parte) return;
-      var tipo = modo === "teclado" ? "teclado" : (i === 0 ? "girar" : (modo === "tactil" ? "pellizco" : "rueda"));
-      var chip = document.createElement("span");
-      chip.className = "ayuda__paso";
-      chip.innerHTML = '<span class="ayuda__icono" aria-hidden="true">' + ICONOS_GESTO[tipo] + "</span>";
-      chip.appendChild(textoNodo("span", "ayuda__paso-texto", parte.charAt(0).toUpperCase() + parte.slice(1)));
-      cont.appendChild(chip);
-    });
-  }
+  var temporizadorAyuda = 0;
   function mostrarAyuda(soloPrincipal, duracion) {
     clearTimeout(temporizadorAyuda);
-    clearTimeout(temporizadorPlegar);
-    var modo = estado.teclado ? "teclado" : (C.esTactil() ? "tactil" : "raton");
-    $("ayuda-titulo").textContent = T.tituloAyuda || "";
     $("ayuda-principal").textContent = T.indicacion || "";
-    pintarGestos(modo === "teclado" ? T.gestosTeclado : (modo === "tactil" ? T.gestosTactil : T.gestosRaton), modo);
+    var gestos = estado.teclado ? T.gestosTeclado : (C.esTactil() ? T.gestosTactil : T.gestosRaton);
+    $("ayuda-secundaria").textContent = gestos || "";
     $("ayuda").classList.toggle("arrastrado", !!soloPrincipal);
     $("ayuda").classList.add("visible");
-    ayudaDesde = performance.now();
     if (duracion) temporizadorAyuda = setTimeout(ocultarAyuda, duracion);
   }
   function ocultarAyuda() {
     clearTimeout(temporizadorAyuda);
-    clearTimeout(temporizadorPlegar);
     $("ayuda").classList.remove("visible");
-  }
-  // Al primer gesto la guía se encoge, pero solo después de dejarla leer unos segundos.
-  function plegarAyuda() {
-    var el = $("ayuda");
-    if (el.classList.contains("arrastrado") || temporizadorPlegar) return;
-    var espera = Math.max(0, 9000 - (performance.now() - ayudaDesde));
-    temporizadorPlegar = setTimeout(function () {
-      temporizadorPlegar = 0;
-      if (estado.fase === "universo") el.classList.add("arrastrado");
-    }, espera);
   }
 
   /* ---------- Interfaz que usan los momentos ---------- */
-
-  // Demostraciones animadas (solo CSS) del gesto de cada tipo de momento.
-  var DEDO = '<i class="demo__dedo"></i>';
-  var DEMOS_GESTO = {
-    encuentro: '<i class="demo__estrella demo__estrella--a"></i><i class="demo__estrella demo__estrella--b"></i><i class="demo__traza"></i>' + DEDO,
-    revelado: '<svg class="demo__anillo" viewBox="0 0 60 60"><circle cx="30" cy="30" r="22"/><circle class="demo__carga" cx="30" cy="30" r="22"/></svg>' + DEDO,
-    luces: '<i class="demo__luz demo__luz--1"></i><i class="demo__luz demo__luz--2"></i><i class="demo__luz demo__luz--3"></i>' + DEDO,
-    deseos: '<svg class="demo__flecha" viewBox="0 0 60 60"><path d="M30 46V14M21 23l9-9 9 9"/></svg><i class="demo__deseo"></i>' + DEDO,
-    latido: '<svg class="demo__corazon" viewBox="0 0 24 24"><path d="M12 20.5s-7.5-4.6-7.5-10.1A4.3 4.3 0 0 1 12 7.6a4.3 4.3 0 0 1 7.5 2.8c0 5.5-7.5 10.1-7.5 10.1z"/></svg>' + DEDO,
-    tocar: DEDO
-  };
 
   var capa = $("capa-momento");
   var etiquetasMomento = {};
@@ -426,27 +380,12 @@
 
   var ui = {
     indicacion: function (texto) {
-      var el = $("momento-indicacion"), guia = $("guia-momento");
+      var el = $("momento-indicacion");
       if (el.textContent === texto) return;
+      el.classList.remove("cambio");
+      void el.offsetWidth;
       el.textContent = texto;
-      if (!texto) { guia.classList.remove("visible"); return; }
-      // Tutorial del momento: tarjeta con una pequeña demostración animada del gesto que pide.
-      var tipo = estado.activa && estado.activa.datos.experiencia ? estado.activa.datos.experiencia.tipo : "";
-      var html = DEMOS_GESTO[tipo] || DEMOS_GESTO.tocar;
-      if (estado.teclado) {
-        var tecla = tipo === "revelado" || tipo === "latido" ? "Espacio" : (tipo === "luces" ? "Tab" : "Enter");
-        tipo = "teclado-" + tecla;
-        html = '<span class="demo__tecla">' + tecla + "</span>";
-      }
-      var demo = $("guia-demo");
-      if (demo.getAttribute("data-tipo") !== tipo) {
-        demo.setAttribute("data-tipo", tipo);
-        demo.innerHTML = html;
-      }
-      $("guia-titulo").textContent = T.tituloGuiaMomento || "";
-      guia.classList.remove("cambio");
-      void guia.offsetWidth;
-      guia.classList.add("visible", "cambio");
+      el.classList.add("cambio");
     },
     progreso: function (n, tot) {
       var cont = $("momento-puntos");
@@ -1394,7 +1333,7 @@
         cuerpo.classList.remove("con-teclado");
         if (estado.ritual && estado.ritual.reindicar) estado.ritual.reindicar();
       }
-      if (estado.fase === "universo") plegarAyuda();
+      if (estado.fase === "universo") $("ayuda").classList.add("arrastrado");
     }
   });
 
