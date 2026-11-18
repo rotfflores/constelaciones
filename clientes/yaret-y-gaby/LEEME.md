@@ -2,7 +2,7 @@
 
 Copia separada de "Nuestras estrellas" (no toca el regalo original ni las copias de otros clientes). Hecha a partir
 de la copia de Luis y Sandra. Solo cambia el contenido en `js/configuracion.js`, las fotos (`assets/fotos/`), la
-canción (`assets/audio/ojitos-lindos.mp3`) y las vistas previas de `index.html` (cache `?v=20261118a`).
+canción (`assets/audio/mi-musa.mp3`) y las vistas previas de `index.html` (cache `?v=20261118b`).
 
 Para Yaret, de Gaby. El 3 de junio de 2026 se toma como el día en que empezó su relación. El vale de la llave es el
 del regalo original ("Vale por una cita") y abre WhatsApp al +52 443 137 3757 (Gaby). Metas, textos y carta escritos
@@ -10,7 +10,7 @@ por nosotros, en femenino. Carpeta en la compu de Obed: `constelaciones\clientes
 Dirección prevista al publicar: https://our-stars.rotfstudio.com/clientes/yaret-y-gaby/
 
 Notas:
-- Canción: "Ojitos Lindos" (Bad Bunny y Bomba Estéreo), MP3 y letra enviados por el cliente.
+- Canción: "Mi Musa" (Marco Ferrero), MP3 enviado por Obed el 18 de noviembre (antes era "Ojitos Lindos"). Sin la letra de la canción: en su lugar van frases de dedicatoria escritas para Yaret.
 - Mapa: Flora, Illinois (38.6689, -88.4856), 22:00 hora de verano del centro (UTC-5), hora aproximada; el sol se
   puso a las 20:14. Esa noche: Venus y Júpiter juntos al oeste, Arturo muy alto, Vega y Altair al este, Antares al
   sureste. La Luna (casi llena, 88 %) salió a las 23:19.

@@ -231,82 +231,33 @@ window.CIELO_CONFIG = {
           aviso: "Esta canción es para ti",
           pista: "Toca el sol para descubrirla y ver su letra",
           tituloOculto: "¿Ya sabes cuál es?",
-          archivo: "assets/audio/ojitos-lindos.mp3",
-          titulo: "Ojitos Lindos",
-          artista: "Bad Bunny y Bomba Estéreo",
-          dedicatoria: "Porque con que me mires con esos ojitos lindos, yo estoy bien",
-          // Letra enviada por el cliente. Tiempos [mm:ss] sincronizados con Whisper (medium) sobre este MP3; los "Tú y yo" y los "Mmm" se ajustaron a mano.
-          // desfaseLetra mueve todas las líneas a la vez (segundos; negativo = antes).
+          archivo: "assets/audio/mi-musa.mp3",
+          titulo: "Mi Musa",
+          artista: "Marco Ferrero",
+          dedicatoria: "Porque eres mi musa, y cada estrella de este cielo lo sabe",
+          // Sin la letra de la canción (Obed no la tiene): en su lugar van frases de dedicatoria
+          // escritas para Yaret, repartidas a lo largo de la canción. Se iluminan como karaoke
+          // y la frase actual aparece en el cielo. desfaseLetra las mueve todas a la vez (segundos).
           idiomaOriginal: "es",
           desfaseLetra: 0,
           letra: `
 [00:00.00]
-[00:10.92]Hace mucho tiempo le hago caso al corazón
-[00:16.04]Y pasan los día', los meses pensando en tu olor
-[00:22.78]Ha llegado el tiempo para usar la razón
-[00:29.22]Ante' que sea tarde y sin querer me parta en do'
-[00:35.28]Antes de que salga el sol y hunda el acelerador
-[00:38.45]Que vaya sin frenos y pierda el control
-[00:41.20]Nada más seremos dos, tú y yo acariciándonos
-[00:44.48]En medio del tiempo, sin decir adiós
-[00:47.12]Y solo mírame con esos ojito' lindo'
-[00:51.90]Que con eso yo estoy bien
-[00:54.95]Hoy he vuelto a nacer
-[00:59.42]Hace tiempo que no agarro a nadie de la mano
-[01:05.48]Hace tiempo que no envío: "buenos días, te amo"
-[01:10.18]Pero tú me tiene' enredao, me envolví
-[01:14.36]Iba por mi camino y me perdí
-[01:17.16]Mi mirada cambió cuando tus ojos vi
-[01:20.18]Bye-bye a los culo', ni me despedí
-[01:22.80]Yo no te busqué, no
-[01:26.00]Chocamo en el trayecto
-[01:28.70]Con tu alma es la que yo conecto
-[01:31.50]Tranquila, no tiene que ser perfecto, no
-[01:35.16]Aquí no existe el pecado
-[01:38.28]Y equivocarse es bonito
-[01:41.34]Los errores son placeres
-[01:44.42]Igual que to' tus besito'
-[01:47.06]Y solo mírame con esos ojito' lindo'
-[01:51.86]Que con eso yo estoy bien
-[01:54.41]Hoy he vuelto a nacer
-[01:58.36]Y solo mírame con esos ojito' lindo'
-[02:03.88]Que con eso yo estoy bien
-[02:06.53]Hoy he vuelto a nacer
-[02:11.46]Tú y yo, tú y yo, tú y yo (tú y yo, tú y yo)
-[02:17.48]Tú y yo, tú y yo (tú y yo, tú y yo), tú y yo
-[02:27.34]Tú y yo, tú y yo
-[02:31.76]Tú y yo, tú y yo
-[02:34.70]Yo no me dejo llevar de nadie
-[02:36.88]Yo solo me dejo llevar de tu sonrisa
-[02:39.98]Y del lunar cerquita de tu boca
-[02:43.06]Si yo estoy loco, tú estás loquita
-[02:46.20]Pero, baby, como tú no hay otra, no
-[02:50.14]Quiero regalarte girasoles
-[02:52.52]Ir pa la playa y buscarte caracoles
-[02:55.86]Cuando estoy contigo, yo no miro el Rolex
-[02:58.66]Vamo a bailar 200 cancione'
-[03:02.14]Nadie me pone como tú me pone'
-[03:06.00]Mmm, mm-mm, mmm
-[03:08.40]Mmm, mm-mm, mmm
-[03:10.96]Yo le hablo a Dio' y tú eres su respuesta
-[03:14.02]Aprendí que los momento' lindo' nunca cuestan
-[03:17.48]Como cuando me regalas tu mirada
-[03:20.12]Y el sol, su puesta (ey, ey), y el sol, su puesta
-[03:23.18]Cuando estoy encima de ti, de ti
-[03:26.46]Mami, yo me olvido de todo, de todo
-[03:29.38]No hace falta nadie aquí
-[03:32.34]Solamente tú y yo
-[03:35.44]Antes de que salga el sol y hunda el acelerador
-[03:38.45]Que vaya sin frenos y pierda el control
-[03:41.24]Nada más seremos dos, tú y yo acariciándonos
-[03:44.44]En medio del tiempo, sin decir adiós
-[03:47.10]Y solo mírame con esos ojito' lindo'
-[03:51.88]Que con eso yo estoy bien
-[03:54.84]Hoy he vuelto a nacer
-[03:59.10]Y solo mírame con esos ojito' lindo'
-[04:03.94]Que con eso yo estoy bien
-[04:06.72]Hoy he vuelto a nacer
-[04:12.00]
+[00:09.00]Esta canción es para ti, Yaret
+[00:23.80]Porque desde el 3 de junio, todo lo bonito me recuerda a ti
+[00:38.60]Eres mi musa: la razón de cada detalle de este cielo
+[00:53.40]Me inspiras cuando sonríes
+[01:08.20]cuando me tomas de la mano
+[01:23.00]y cuando me miras sin decir nada
+[01:37.80]Contigo, los días comunes se vuelven canciones
+[01:52.60]Cada foto nuestra es un verso que quiero seguir escribiendo
+[02:07.40]De Flora a Chicago, de un lago a cualquier camino,
+[02:22.20]mi lugar favorito siempre es a tu lado
+[02:37.00]Gracias por llegar sin avisar
+[02:51.80]y quedarte como si siempre hubieras sido parte de mí
+[03:06.60]Todo lo que viene, quiero vivirlo contigo
+[03:21.40]Te amo, Yaret
+[03:36.20]Con todo mi amor, Gaby
+[03:50.00]
 `
         }
       }
@@ -418,7 +369,7 @@ window.CIELO_CONFIG = {
       "Hacía tiempo que no tomaba a nadie de la mano, ni mandaba un “buenos días, te amo”. Y entonces llegaste tú. Yo no te busqué: chocamos en el trayecto, y desde el 3 de junio de 2026 todo cambió.",
       "Contigo aprendí que no tiene que ser perfecto para ser bonito. Que los momentos lindos nunca cuestan, como cuando me regalas tu mirada.",
       "Gracias por tu paciencia, por tus risas, por cada viaje y cada abrazo. Contigo me siento en casa, estemos en Flora, en Chicago o en cualquier camino.",
-      "Esto apenas empieza, y quiero vivir todo lo que viene a tu lado. Te amo, Yaret. Solo mírame con esos ojitos lindos, que con eso yo estoy bien."
+      "Esto apenas empieza, y quiero vivir todo lo que viene a tu lado. Te amo, Yaret. Eres mi musa, hoy y en cada cielo que nos toque mirar juntas."
     ],
     despedida: "Con todo mi amor,",
     firma: "Gaby"
