@@ -1,12 +1,12 @@
-# Copia para cliente: Melimelon, de Fredy (8 de octubre de 2024, Toluca, Estado de México)
+# Copia para cliente: Melimelon, de Freddy (8 de octubre de 2024, Toluca, Estado de México)
 
 Copia separada de "Nuestras estrellas" (no toca el regalo original ni las copias de otros clientes). Hecha a partir
 de la copia de Yaret y Gaby. Solo cambia el contenido en `js/configuracion.js`, las fotos (`assets/fotos/`), la
-canción (`assets/audio/just-one-day.mp3`) y las vistas previas de `index.html` (cache `?v=20261118m`).
+canción (`assets/audio/just-one-day.mp3`) y las vistas previas de `index.html` (cache `?v=20261118n`).
 
-Para Melimelon (apodo, se deja tal cual), de Fredy. El 8 de octubre de 2024 se toma como el día en que empezó su
+Para Melimelon (apodo, se deja tal cual), de Freddy. El 8 de octubre de 2024 se toma como el día en que empezó su
 historia. El vale de la llave es el del regalo original ("Vale por una cita") y abre WhatsApp al +52 722 389 2908
-(Fredy). Metas, textos y carta escritos por nosotros, con la voz de Fredy. Carpeta en la compu de Obed:
+(Freddy). Metas, textos y carta escritos por nosotros, con la voz de Freddy. Carpeta en la compu de Obed:
 `constelaciones\clientes\melimelon-y-fredy`.
 Dirección prevista al publicar: https://our-stars.rotfstudio.com/clientes/melimelon-y-fredy/
 

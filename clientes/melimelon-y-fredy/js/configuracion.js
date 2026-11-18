@@ -51,7 +51,7 @@
 window.CIELO_CONFIG = {
   /* Quién recibe y quién envía */
   destinatario: "Melimelon",
-  remitente: "Fredy",
+  remitente: "Freddy",
 
   /* Textos generales */
   textos: {
@@ -138,7 +138,7 @@ window.CIELO_CONFIG = {
         fecha: "8 de octubre de 2024",
         titulo: "El día que empezó lo nuestro",
         mensaje: "El 8 de octubre de 2024 empezó nuestra historia. Desde ese día, Toluca se volvió un lugar distinto: cada calle, cada tarde fría y cada noche tienen algo de ti.",
-        // La llave abre un vale por una cita; se reclama por WhatsApp con Fredy.
+        // La llave abre un vale por una cita; se reclama por WhatsApp con Freddy.
         // whatsapp: el número con lada del país y sin espacios (52 es México).
         sorpresa: {
           tipo: "cita",
@@ -152,7 +152,7 @@ window.CIELO_CONFIG = {
           vigencia: "Válido para siempre",
           boton: "Reclamar por WhatsApp",
           whatsapp: "527223892908",
-          mensajeWhatsapp: "Hola, Fredy ✨ Abrí la llave de nuestras estrellas y vengo a reclamar mi cita.",
+          mensajeWhatsapp: "Hola, Freddy ✨ Abrí la llave de nuestras estrellas y vengo a reclamar mi cita.",
           nota: "Si WhatsApp no se abre, escríbele al +52 722 389 2908"
         }
       }
@@ -519,6 +519,6 @@ window.CIELO_CONFIG = {
       "Gracias por elegirme, por tu paciencia y por cada momento juntos. Te amo, Melimelon. Tú estás en el centro de mi vida."
     ],
     despedida: "Con todo mi amor,",
-    firma: "Fredy"
+    firma: "Freddy"
   }
 };
